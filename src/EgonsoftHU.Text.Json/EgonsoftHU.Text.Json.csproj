@@ -9,8 +9,8 @@
     <!--
     <VersionSuffix>$([System.String]::Format('prerelease-{0:000}-{1:0000}', $([System.DateTime]::Now.DayOfYear), $([System.Math]::Floor($([System.DateTime]::Now.TimeOfDay.TotalMinutes)))))</VersionSuffix>
     -->
-    <Authors>Gabor Csizmadia</Authors>
-    <Owners>Egonsoft.HU</Owners>
+    <!--<Authors></Authors>-->
+    <!--<Owners></Owners>-->
     <Title>Egonsoft.HU JSON Library</Title>
     <Description>System.Text.Json extensions.
 
@@ -47,25 +47,21 @@ EgonsoftHU.Text.Json.JsonSerializerOptionsProvider</Summary>
     <!--
     <Copyright></Copyright>
     -->
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/gcsizmadia/EgonsoftHU.Text.Json</PackageProjectUrl>
-    <!--
-    <PackageIcon></PackageIcon>
-    <PackageIconUrl></PackageIconUrl>
-    <PackageReadmeFile></PackageReadmeFile>
-    -->
+    <!--<PackageRequireLicenseAcceptance></PackageRequireLicenseAcceptance>-->
+    <!--<PackageLicenseExpression></PackageLicenseExpression>-->
+    <PackageProjectUrl>https://github.com/gcsizmadia/json</PackageProjectUrl>
+    <!--<PackageIcon></PackageIcon>-->
+    <!--<PackageIconUrl></PackageIconUrl>-->
+    <!--<PackageReadmeFile></PackageReadmeFile>-->
     <PackageTags>$(PackageTags) json systemtextjson System.Text.Json enum JsonStringEnumMemberNameAttribute EnumMemberAttribute DescriptionAttribute DisplayNameAttribute DisplayAttribute</PackageTags>
-    <PackageReleaseNotes>Please visit https://github.com/gcsizmadia/EgonsoftHU.Text.Json/releases to view the release notes.</PackageReleaseNotes>
-    <RepositoryUrl>https://github.com/gcsizmadia/EgonsoftHU.Text.Json.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <!--
-    <RepositoryBranch></RepositoryBranch>
-    <RepositoryCommit></RepositoryCommit>
-    -->
-    <PackageType>Dependency</PackageType>
-    <DevelopmentDependency>false</DevelopmentDependency>
-    <MinClientVersion>4.7.0</MinClientVersion>
+    <PackageReleaseNotes>Please visit https://github.com/gcsizmadia/json/releases to view the release notes.</PackageReleaseNotes>
+    <!--<RepositoryUrl></RepositoryUrl>-->
+    <!--<RepositoryType></RepositoryType>-->
+    <!--<RepositoryBranch></RepositoryBranch>-->
+    <!--<RepositoryCommit></RepositoryCommit>-->
+    <!--<PackageType></PackageType>-->
+    <!--<DevelopmentDependency></DevelopmentDependency>-->
+    <!--<MinClientVersion></MinClientVersion>-->
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="EgonsoftHU.Extensions.Bcl" Version="3.0.1" />
