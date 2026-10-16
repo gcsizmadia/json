@@ -92,7 +92,7 @@ The following attributes are supported:
 - `System.ComponentModel.DisplayNameAttribute`
 - `System.ComponentModel.DataAnnotations.DisplayAttribute` (`Description`, `Name` and `ShortName` properties are supported.)
 
-To create an instance and select an attribute using the `EgonsoftHU.Text.Json.Serialization.EnumMemberNameSelectorOption` enum type:
+To create an instance select a naming policy and an attribute using the `EgonsoftHU.Text.Json.Serialization.EnumMemberNameSelectorOption` enum type:
 
 ```csharp
 using System.Text.Json;
@@ -102,8 +102,7 @@ using EgonsoftHU.Text.Json.Serialization.Converters;
 var serializer =
     new JsonEnumValueSerializer(
         JsonNamingPolicy.CamelCase,
-        // The second parameter is optional. This is the default value:
-        EnumMemberNameSelectorOption.UseJsonStringEnumMemberNameAttribute
+        EnumMemberAttributeSelectorOption.UseJsonStringEnumMemberNameAttribute
     );
 ```
 
@@ -160,8 +159,8 @@ options.AddEgonsoftJsonStringEnumConverter();
 ### JsonSerializerOptions extension methods
 
 The following extensions methods are defined:
-- AddEgonsoftJsonStringEnumConverter()
-- CopyTo()
+- `AddEgonsoftJsonStringEnumConverter()`
+- `CopyTo()`
 
 #### AddEgonsoftJsonStringEnumConverter()
 
@@ -169,7 +168,7 @@ You can easily add this converter to your `JsonSerializerOptions` instance.
 
 ```csharp
 using System.Text.Json;
-using EgonsoftHU.Text.Json.Serialization;
+using EgonsoftHU.Text.Json;
 
 JsonSerializerOptions options = /* omitted for clarity */
 
@@ -190,6 +189,7 @@ Suppose you already have an existing instance of the `JsonSerializerOptions` cla
 This `CopyTo()` extension method comes in handy in this case:
 
 ```csharp
+using EgonsoftHU.Text.Json;
 using Microsoft.AspNetCore.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -224,8 +224,7 @@ will use these values in the following order, from highest to lowest priority:
 
 ```csharp
 using System.Text.Json;
-using EgonsoftHU.Text.Json.Serialization;
-using EgonsoftHU.Text.Json.Serialization.Converters;
+using EgonsoftHU.Text.Json;
 using Microsoft.AspNetCore.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
