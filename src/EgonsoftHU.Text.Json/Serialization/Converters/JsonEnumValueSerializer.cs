@@ -2,18 +2,17 @@
 // This code is licensed under MIT license (see LICENSE for details)
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-
-#if NET9_0_OR_GREATER
+#if !NET9_0_OR_GREATER
 using System.Text.Json.Serialization;
 #endif
 
 using EgonsoftHU.Extensions.Bcl;
 using EgonsoftHU.Extensions.Bcl.Constants;
 using EgonsoftHU.Extensions.Bcl.Enumerations;
-using EgonsoftHU.Extensions.Bcl.Enumerations.Serialization;
-using EgonsoftHU.Text.Json.Constants;
+using EgonsoftHU.Text.Json.Exceptions;
 
 namespace EgonsoftHU.Text.Json.Serialization.Converters
 {
@@ -23,34 +22,50 @@ namespace EgonsoftHU.Text.Json.Serialization.Converters
     /// </summary>
     public class JsonEnumValueSerializer : EnumValueSerializer
     {
-        private const string AttributeTypeFullName = "System.Text.Json.Serialization.JsonStringEnumMemberNameAttribute";
-        private const string AttributePropertyName = "Name";
-
-        private static readonly bool ShouldGetByName =
-            AppContext.TryGetSwitch(AppContextSwitches.AlwaysCheckForJsonStringEnumMemberAttributeByName, out bool isEnabled)
-            &&
-            isEnabled;
-
         private readonly JsonNamingPolicy? jsonNamingPolicy;
-        private readonly EnumMemberNameSelectorOption nameSelectorOption;
+        private readonly IReadOnlyCollection<EnumMemberAttributeSelectorOption> enumMemberAttributeSelectorOptions;
 
+#if !LANGVERSION13_0_OR_GREATER
         /// <summary>
-        /// Initializes an instance of the <see cref="JsonEnumValueSerializer"/> class with the specified <see cref="JsonNamingPolicy"/>.
+        /// Initializes a new instance of the <see cref="JsonEnumValueSerializer"/> class
+        /// with a specified <see cref="JsonNamingPolicy"/> and
+        /// a read-only collection of <see cref="EnumMemberAttributeSelectorOption"/>.
         /// </summary>
-        /// <param name="jsonNamingPolicy">The optional naming policy for reading and writing enum values.</param>
-        /// <param name="nameSelectorOption">A value that specifies which attribute to use.</param>
         public JsonEnumValueSerializer(
-            JsonNamingPolicy? jsonNamingPolicy = null,
-            EnumMemberNameSelectorOption nameSelectorOption = EnumMemberNameSelectorOption.UseJsonStringEnumMemberNameAttribute
+            JsonNamingPolicy? jsonNamingPolicy,
+            params
+            EnumMemberAttributeSelectorOption[] enumMemberAttributeSelectorOptions
         )
         {
-            if (!EnumInfo<EnumMemberNameSelectorOption>.TryFromValue(nameSelectorOption, out _))
-            {
-                throw new ArgumentOutOfRangeException(nameof(nameSelectorOption));
-            }
-
             this.jsonNamingPolicy = jsonNamingPolicy;
-            this.nameSelectorOption = nameSelectorOption;
+            this.enumMemberAttributeSelectorOptions = enumMemberAttributeSelectorOptions;
+
+            ThrowIfInvalidEnumValues(enumMemberAttributeSelectorOptions);
+        }
+#endif
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonEnumValueSerializer"/> class
+        /// with a specified <see cref="JsonNamingPolicy"/> and
+        /// a read-only collection of <see cref="EnumMemberAttributeSelectorOption"/>.
+        /// </summary>
+        public JsonEnumValueSerializer(
+            JsonNamingPolicy? jsonNamingPolicy,
+#if LANGVERSION13_0_OR_GREATER
+            params
+#endif
+            IReadOnlyCollection<EnumMemberAttributeSelectorOption> enumMemberAttributeSelectorOptions
+        )
+        {
+            this.jsonNamingPolicy = jsonNamingPolicy;
+            this.enumMemberAttributeSelectorOptions = enumMemberAttributeSelectorOptions;
+
+            ThrowIfInvalidEnumValues(enumMemberAttributeSelectorOptions);
+        }
+
+        internal static EnumValueSerializer CreateDefault()
+        {
+            return new JsonEnumValueSerializer(null, EnumMemberAttributeSelectorOption.UseJsonStringEnumMemberNameAttribute);
         }
 
         /// <inheritdoc/>
@@ -58,7 +73,7 @@ namespace EgonsoftHU.Text.Json.Serialization.Converters
         /// The conversion methods in order of priority:
         /// <list type="bullet">
         /// <item>
-        /// The value of the attribute selected by <see cref="EnumMemberNameSelectorOption"/>,
+        /// The value of the attribute selected by <see cref="EnumMemberAttributeSelectorOption"/>,
         /// if that attribute is applied to the current enum member.
         /// </item>
         /// <item><see cref="JsonNamingPolicy"/>, if specified.</item>
@@ -71,7 +86,7 @@ namespace EgonsoftHU.Text.Json.Serialization.Converters
                 enumeration
                     .Select(
                         flag =>
-                            GetEnumMemberName(flag.Attributes)
+                            GetEnumMemberAttributeValue(flag.Attributes)
                             ??
                             jsonNamingPolicy?.ConvertName(flag.Name)
                             ??
@@ -92,107 +107,95 @@ namespace EgonsoftHU.Text.Json.Serialization.Converters
         /// The <paramref name="serializedValue"/> will be compared to the following values, in order of priority:
         /// <list type="bullet">
         /// <item>
-        /// The value of the attribute selected by <see cref="EnumMemberNameSelectorOption"/>,
+        /// The value of the attribute selected by <see cref="EnumMemberAttributeSelectorOption"/>,
         /// if that attribute is applied to the current enum member.
         /// </item>
         /// <item>The value produced by the specified <see cref="JsonNamingPolicy"/>.</item>
-        /// <item>The enum member's name. The comparing is case insensitive.</item>
+        /// <item>The enum member's name. The comparing is case sensitive.</item>
         /// </list>
         /// </remarks>
         public override EnumInfo<TEnum>? Deserialize<TEnum>(string serializedValue)
         {
-            string[] names = GetNames(serializedValue);
+            string[] serializedSingleValues = GetNames(serializedValue);
 
             var membersFound =
-                names
+                serializedSingleValues
                     .Select(
-                        name =>
+                        serializedSingleValue =>
                             EnumInfo<TEnum>.DeclaredMembers.FirstOrDefault(
                                 member =>
                                 (
-                                    GetEnumMemberName(member.Attributes) is string attributeName
+                                    GetEnumMemberAttributeValue(member.Attributes) is string attributeValue
                                     &&
-                                    String.Equals(name, attributeName, StringComparison.Ordinal)
+                                    String.Equals(serializedSingleValue, attributeValue, StringComparison.Ordinal)
                                 )
                                 ||
                                 (
                                     jsonNamingPolicy is not null
                                     &&
-                                    String.Equals(name, jsonNamingPolicy.ConvertName(member.Name), StringComparison.Ordinal)
+                                    String.Equals(serializedSingleValue, jsonNamingPolicy.ConvertName(member.Name), StringComparison.Ordinal)
                                 )
                                 ||
-                                String.Equals(name, member.Name, StringComparison.OrdinalIgnoreCase))
+                                String.Equals(serializedSingleValue, member.Name, StringComparison.Ordinal))
                     )
                     .OfType<EnumInfo<TEnum>>()
                     .ToList();
 
             EnumInfo<TEnum>? enumeration =
-                membersFound.Count switch
+                (membersFound.Count, serializedSingleValues.Length) switch
                 {
-                    1 => membersFound[0],
-                    > 1 => membersFound.Aggregate((first, second) => first | second),
-                    _ => EnumInfo<TEnum>.Default
+                    (1, 1) => membersFound[0],
+                    var (found, serialized) when found == serialized && found > 1 => membersFound.Aggregate((first, second) => first | second),
+                    _ => throw JsonExceptions.InvalidEnumValue()
                 };
 
             return enumeration;
         }
 
-        private string? GetEnumMemberName(IEnumerationAttributes attributes)
+        private static void ThrowIfInvalidEnumValues(IReadOnlyCollection<EnumMemberAttributeSelectorOption> enumMemberAttributeSelectorOptions)
         {
-            return nameSelectorOption switch
+            if (enumMemberAttributeSelectorOptions.All(value => EnumInfo.TryFromValue(value, out _)))
             {
-                EnumMemberNameSelectorOption.UseJsonStringEnumMemberNameAttribute => GetJsonStringEnumMemberName(attributes),
-                EnumMemberNameSelectorOption.UseEnumMemberAttribute => attributes.EnumMember?.Value,
-                EnumMemberNameSelectorOption.UseDescriptionAttribute => attributes.Description?.Description,
-                EnumMemberNameSelectorOption.UseDisplayNameAttribute => attributes.DisplayName?.DisplayName,
-                EnumMemberNameSelectorOption.UseDisplayAttributeGetName => attributes.Display?.GetName(),
-                EnumMemberNameSelectorOption.UseDisplayAttributeGetShortName => attributes.Display?.GetShortName(),
-                EnumMemberNameSelectorOption.UseDisplayAttributeGetDescription => attributes.Display?.GetDescription(),
-                _ => throw new InvalidOperationException("Invalid enum value.")
-            };
+                return;
+            }
+
+            throw new ArgumentException("Invalid options.", nameof(enumMemberAttributeSelectorOptions));
+        }
+
+        private string? GetEnumMemberAttributeValue(IEnumerationAttributes attributes)
+        {
+            foreach (EnumMemberAttributeSelectorOption nameSelectorOption in enumMemberAttributeSelectorOptions)
+            {
+                string? name = nameSelectorOption switch
+                {
+                    EnumMemberAttributeSelectorOption.UseJsonStringEnumMemberNameAttribute => GetJsonStringEnumMemberName(attributes),
+                    EnumMemberAttributeSelectorOption.UseEnumMemberAttribute => attributes.EnumMember?.Value,
+                    EnumMemberAttributeSelectorOption.UseDescriptionAttribute => attributes.Description?.Description,
+                    EnumMemberAttributeSelectorOption.UseDisplayNameAttribute => attributes.DisplayName?.DisplayName,
+                    EnumMemberAttributeSelectorOption.UseDisplayAttributeGetName => attributes.Display?.GetName(),
+                    EnumMemberAttributeSelectorOption.UseDisplayAttributeGetShortName => attributes.Display?.GetShortName(),
+                    EnumMemberAttributeSelectorOption.UseDisplayAttributeGetDescription => attributes.Display?.GetDescription(),
+                    _ => null
+                };
+
+                if (!name.IsNullOrWhiteSpace())
+                {
+                    return name;
+                }
+            }
+
+            return null;
         }
 
         private static string? GetJsonStringEnumMemberName(IEnumerationAttributes attributes)
         {
-#if NET9_0_OR_GREATER
             return
-                ShouldGetByName
-                    ? GetJsonStringEnumMemberNameByAttributeName(attributes)
-                    : GetJsonStringEnumMemberNameByAttributeType(attributes);
+#if NET9_0_OR_GREATER
+                attributes.JsonStringEnumMemberName?.Name
 #else
-            return
-                ShouldGetByName
-                    ? GetJsonStringEnumMemberNameByAttributeName(attributes)
-                    : GetJsonStringEnumMemberNameByAttributeName(attributes);
+                attributes.GetAttribute<JsonStringEnumMemberNameAttribute>()?.Name
 #endif
-        }
-
-#if NET9_0_OR_GREATER
-        /// <remarks>
-        /// This method will be available for other target framework (except net6.0)
-        /// as soon as System.Text.Json (>= 9.0.0) is referenced in this project.
-        /// </remarks>
-        private static string? GetJsonStringEnumMemberNameByAttributeType(IEnumerationAttributes attributes)
-        {
-            return attributes.GetAttribute<JsonStringEnumMemberNameAttribute>()?.Name;
-        }
-#endif
-
-        private static string? GetJsonStringEnumMemberNameByAttributeName(IEnumerationAttributes attributes)
-        {
-            return
-                attributes
-                    .GetAll()
-                    .FirstOrDefault(
-                        attribute => String.Equals(AttributeTypeFullName, TypeHelper.GetTypeName(attribute.GetType()), StringComparison.Ordinal)
-                    )
-                    is Attribute attribute
-                &&
-                attribute.TryGetPropertyValue(AttributePropertyName, out object? value)
-                &&
-                value is string name
-                    ? name
-                    : null;
+                ;
         }
     }
 }

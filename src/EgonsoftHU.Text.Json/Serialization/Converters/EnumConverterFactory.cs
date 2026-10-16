@@ -5,8 +5,6 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using EgonsoftHU.Extensions.Bcl.Enumerations.Serialization;
-
 namespace EgonsoftHU.Text.Json.Serialization.Converters
 {
     internal sealed class EnumConverterFactory : JsonConverterFactory
@@ -18,23 +16,20 @@ namespace EgonsoftHU.Text.Json.Serialization.Converters
 
         public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
-            return Create(typeToConvert, options, null, EnumConverterOptions.AllowNumbers, (_, __) => EnumValueSerializer.Current);
+            return Create(typeToConvert, options, EnumConverterOptions.Default);
         }
 
         internal static JsonConverter? Create(
             Type enumType,
-            JsonSerializerOptions options,
-            JsonNamingPolicy? jsonNamingPolicy,
-            EnumConverterOptions converterOptions,
-            Func<JsonSerializerOptions, JsonNamingPolicy?, EnumValueSerializer> enumValueSerializerFactory
+            JsonSerializerOptions jsonSerializerOptions,
+            EnumConverterOptions jsonEnumConverterOptions
         )
         {
             return
                 (JsonConverter?)Activator.CreateInstance(
                     GetEnumConverterType(enumType),
-                    converterOptions,
-                    enumValueSerializerFactory.Invoke(options, jsonNamingPolicy),
-                    options
+                    jsonSerializerOptions,
+                    jsonEnumConverterOptions
                 );
         }
 

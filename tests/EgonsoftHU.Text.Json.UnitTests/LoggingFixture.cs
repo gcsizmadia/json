@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -42,6 +43,7 @@ namespace EgonsoftHU.Text.Json.UnitTests
                     path: Path.Combine(AppContext.BaseDirectory, "xunit-output.log"),
                     restrictedToMinimumLevel: LogEventLevel.Verbose,
                     outputTemplate: OutputTemplate,
+                    formatProvider: CultureInfo.CurrentCulture,
                     shared: true,
                     encoding: Encoding.UTF8
                 );
@@ -49,11 +51,11 @@ namespace EgonsoftHU.Text.Json.UnitTests
             switch (output)
             {
                 case ITestOutputHelper testOutputHelper:
-                    loggerConfiguration.WriteTo.TestOutput(testOutputHelper, LogEventLevel.Verbose, OutputTemplate);
+                    loggerConfiguration.WriteTo.TestOutput(testOutputHelper, LogEventLevel.Verbose, OutputTemplate, CultureInfo.CurrentCulture);
                     break;
 
                 case IMessageSink messageSink:
-                    loggerConfiguration.WriteTo.TestOutput(messageSink, LogEventLevel.Verbose, OutputTemplate);
+                    loggerConfiguration.WriteTo.TestOutput(messageSink, LogEventLevel.Verbose, OutputTemplate, CultureInfo.CurrentCulture);
                     break;
 
                 default:

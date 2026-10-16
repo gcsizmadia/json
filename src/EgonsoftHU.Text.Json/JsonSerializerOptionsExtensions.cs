@@ -35,6 +35,8 @@ namespace EgonsoftHU.Text.Json
             source.ThrowIfNull();
             target.ThrowIfNull();
 
+            target.AllowDuplicateProperties = source.AllowDuplicateProperties;
+            target.AllowOutOfOrderMetadataProperties = source.AllowOutOfOrderMetadataProperties;
             target.AllowTrailingCommas = source.AllowTrailingCommas;
 
             target.Converters.Clear();
@@ -47,13 +49,21 @@ namespace EgonsoftHU.Text.Json
             target.IgnoreReadOnlyFields = source.IgnoreReadOnlyFields;
             target.IgnoreReadOnlyProperties = source.IgnoreReadOnlyProperties;
             target.IncludeFields = source.IncludeFields;
+            target.IndentCharacter = source.IndentCharacter;
+            target.IndentSize = source.IndentSize;
             target.MaxDepth = source.MaxDepth;
+            target.NewLine = source.NewLine;
             target.NumberHandling = source.NumberHandling;
+            target.PreferredObjectCreationHandling = source.PreferredObjectCreationHandling;
             target.PropertyNameCaseInsensitive = source.PropertyNameCaseInsensitive;
             target.PropertyNamingPolicy = source.PropertyNamingPolicy;
             target.ReadCommentHandling = source.ReadCommentHandling;
             target.ReferenceHandler = source.ReferenceHandler;
+            target.RespectNullableAnnotations = source.RespectNullableAnnotations;
+            target.RespectRequiredConstructorParameters = source.RespectRequiredConstructorParameters;
+            target.TypeInfoResolver = source.TypeInfoResolver;
             target.UnknownTypeHandling = source.UnknownTypeHandling;
+            target.UnmappedMemberHandling = source.UnmappedMemberHandling;
             target.WriteIndented = source.WriteIndented;
         }
     }

@@ -1,12 +1,11 @@
 ﻿// Copyright © 2023-2026 Gabor Csizmadia
 // This code is licensed under MIT license (see LICENSE for details)
 
-using System.Runtime.Serialization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Unicode;
 
-using EgonsoftHU.Extensions.Bcl.Enumerations.Serialization;
 using EgonsoftHU.Text.Json.Serialization;
 using EgonsoftHU.Text.Json.Serialization.Converters;
 
@@ -17,17 +16,11 @@ namespace EgonsoftHU.Text.Json
     /// </summary>
     public static class JsonSerializerOptionsProvider
     {
-        private static readonly EnumValueSerializer defaultEnumValueSerializer;
-
         static JsonSerializerOptionsProvider()
         {
-            defaultEnumValueSerializer = new JsonEnumValueSerializer(JsonNamingPolicy.CamelCase);
-
             Default = CreateDefault(writeIndented: false);
             DefaultWriteIndented = CreateDefault(writeIndented: true);
             Current = CreateDefault(writeIndented: false);
-
-            EnumValueSerializer.Current = defaultEnumValueSerializer;
         }
 
         /// <summary>
@@ -43,12 +36,12 @@ namespace EgonsoftHU.Text.Json
         /// </item>
         /// <item><see cref="JsonSerializerOptions.WriteIndented"/> is set to <see langword="false"/>.</item>
         /// <item>
-        /// An instance of the <see cref="JsonStringEnumConverter"/> class is added to the <see cref="JsonSerializerOptions.Converters"/> collection
+        /// An instance of the <see cref="EgonsoftJsonStringEnumConverterFactory"/> class is added to the <see cref="JsonSerializerOptions.Converters"/> collection
         /// that uses:
         /// <list type="bullet">
         /// <item>An instance of the <see cref="JsonEnumValueSerializer"/> class with the following serialization options in order of priority:</item>
         /// <list type="bullet">
-        /// <item><see cref="EnumMemberAttribute.Value"/></item>
+        /// <item><see cref="JsonStringEnumMemberNameAttribute.Name"/></item>
         /// <item><see cref="JsonNamingPolicy.CamelCase"/></item>
         /// <item>The enum member's name.</item>
         /// </list>
@@ -71,12 +64,12 @@ namespace EgonsoftHU.Text.Json
         /// </item>
         /// <item><see cref="JsonSerializerOptions.WriteIndented"/> is set to <see langword="true"/>.</item>
         /// <item>
-        /// An instance of the <see cref="JsonStringEnumConverter"/> class is added to the <see cref="JsonSerializerOptions.Converters"/> collection
+        /// An instance of the <see cref="EgonsoftJsonStringEnumConverterFactory"/> class is added to the <see cref="JsonSerializerOptions.Converters"/> collection
         /// that uses:
         /// <list type="bullet">
         /// <item>An instance of the <see cref="JsonEnumValueSerializer"/> class with the following serialization options in order of priority:</item>
         /// <list type="bullet">
-        /// <item><see cref="EnumMemberAttribute.Value"/></item>
+        /// <item><see cref="JsonStringEnumMemberNameAttribute.Name"/></item>
         /// <item><see cref="JsonNamingPolicy.CamelCase"/></item>
         /// <item>The enum member's name.</item>
         /// </list>
@@ -91,10 +84,6 @@ namespace EgonsoftHU.Text.Json
         /// </summary>
         /// <remarks>
         /// By default, it is an instance with the same settings as the one returned by the <see cref="Default"/> property.
-        /// <para>
-        /// If you set an instance that uses <see cref="JsonStringEnumConverter"/> with an implementation of <see cref="EnumValueSerializer"/>
-        /// then it is recommended to also set the <see cref="EnumValueSerializer.Current"/> property to that implementation.
-        /// </para>
         /// </remarks>
         public static JsonSerializerOptions Current { get; set; }
 
@@ -107,12 +96,7 @@ namespace EgonsoftHU.Text.Json
                     WriteIndented = writeIndented
                 };
 
-            options.Converters.Add(
-                new JsonStringEnumConverter(
-                    JsonNamingPolicy.CamelCase,
-                    enumValueSerializerFactory: (jsonSerializerOptions, jsonNamingPolicy) => defaultEnumValueSerializer
-                )
-            );
+            options.AddEgonsoftJsonStringEnumConverter();
 
             return options;
         }

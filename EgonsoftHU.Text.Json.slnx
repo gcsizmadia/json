@@ -13,7 +13,9 @@
   <Folder Name="/00_Documents/">
     <File Path="LICENSE" />
     <File Path="README.md" />
+    <File Path="README_NEW.md" />
+    <File Path="RELEASES.md" />
   </Folder>
-  <Project Path="src/EgonsoftHU.Text.Json/EgonsoftHU.Text.Json.csproj" />
-  <Project Path="test/EgonsoftHU.Text.Json.UnitTests/EgonsoftHU.Text.Json.UnitTests.csproj" />
+  <Project Path="D:/Source/GIT/gcsizmadia/EgonsoftHU.Text.Json/src/EgonsoftHU.Text.Json/EgonsoftHU.Text.Json.csproj" />
+  <Project Path="D:/Source/GIT/gcsizmadia/EgonsoftHU.Text.Json/tests/EgonsoftHU.Text.Json.UnitTests/EgonsoftHU.Text.Json.UnitTests.csproj" />
 </Solution>

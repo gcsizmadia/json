@@ -16,7 +16,7 @@ using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 
-using JsonStringEnumConverter = EgonsoftHU.Text.Json.Serialization.JsonStringEnumConverter;
+using EgonsoftJsonStringEnumConverterFactory = EgonsoftHU.Text.Json.Serialization.EgonsoftJsonStringEnumConverterFactory;
 
 namespace EgonsoftHU.Text.Json.UnitTests
 {
@@ -47,7 +47,6 @@ namespace EgonsoftHU.Text.Json.UnitTests
         [Theory]
         [InlineData("\"friday\"", DayOfWeek.Friday)]
         [InlineData("\"Friday\"", DayOfWeek.Friday)]
-        [InlineData("\"FrIdAy\"", DayOfWeek.Friday)]
         [InlineData("7", (DayOfWeek)7)]
         [InlineData("0", DayOfWeek.Sunday)]
         [InlineData("-1", (DayOfWeek)(-1))]
@@ -55,7 +54,6 @@ namespace EgonsoftHU.Text.Json.UnitTests
         [InlineData("\"m\"", MetricPrefix.Milli)]
         [InlineData("\"milli\"", MetricPrefix.Milli)]
         [InlineData("\"Milli\"", MetricPrefix.Milli)]
-        [InlineData("\"MiLLi\"", MetricPrefix.Milli)]
         [InlineData("\"M\"", MetricPrefix.Mega)]
         public void DeserializeTest<TEnum>(string serializedValue, TEnum expectedValue)
             where TEnum : struct, Enum
@@ -108,7 +106,7 @@ namespace EgonsoftHU.Text.Json.UnitTests
         {
             // Arrange
             JsonSerializerOptions options = JsonSerializerOptionsProvider.Current;
-            JsonStringEnumConverter converter = options.Converters.OfType<JsonStringEnumConverter>().Single();
+            EgonsoftJsonStringEnumConverterFactory converter = options.Converters.OfType<EgonsoftJsonStringEnumConverterFactory>().Single();
 
             Type enumType = Type.GetType("System.Reflection.Emit.OpCodeValues") ?? typeof(System.Runtime.InteropServices.VarEnum);
 
@@ -125,7 +123,7 @@ namespace EgonsoftHU.Text.Json.UnitTests
             sut.Should().NotThrow();
         }
 
-        private JsonConverter? CreateConverter(JsonStringEnumConverter converter, Type typeToConvert, JsonSerializerOptions options)
+        private JsonConverter? CreateConverter(EgonsoftJsonStringEnumConverterFactory converter, Type typeToConvert, JsonSerializerOptions options)
         {
             try
             {

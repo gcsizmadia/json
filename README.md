@@ -6,9 +6,14 @@
 
 `System.Text.Json` extensions.
 
-- Supports any attribute for enum member serialization.
-- Provides option for using your own custom serializer implementation for enum members.
-- and much more...
+- Supports advanced enum member serialization in the following order:
+  - Any attribute applied to an enum member, built-in support for 5 attributes.
+  - `JsonNamingPolicy`
+  - The enum member name as it is written.
+- Supports custom serializer implementations for enum members.
+- Pre-configured `JsonSerializerOptions` instances.
+- Extension methods for `JsonSerializerOptions`.
+- Additional `JsonNamingPolicy` implementations.
 
 ## Table of Contents
 
@@ -20,9 +25,11 @@
   * [JsonEnumValueSerializer](#jsonenumvalueserializer)
     + [Value precedence](#value-precedence)
   * [Custom implementation of EnumValueSerializer](#custom-implementation-of-enumvalueserializer)
-  * [JsonStringEnumConverter](#jsonstringenumconverter)
+  * [EgonsoftJsonStringEnumConverterFactory](#egonsoftjsonstringenumconverterfactory)
   * [JsonSerializerOptionsProvider](#jsonserializeroptionsprovider)
-  * [JsonSerializerOptions extension method](#jsonserializeroptions-extension-method)
+  * [JsonSerializerOptions extension methods](#jsonserializeroptions-extension-methods)
+    + [AddEgonsoftJsonStringEnumConverter()](#addegonsoftjsonstringenumconverter--)
+    + [CopyTo()](#copyto--)
   * [Naming policies](#naming-policies)
 - [Example configuration](#example-configuration)
 - [JsonStringEnumMemberNameAttribute support](#jsonstringenummembernameattribute-support)
@@ -33,10 +40,15 @@ The motivation behind this project is to extend `System.Text.Json` features.
 
 ## Releases
 
-You can download the package from [nuget.org](https://www.nuget.org/).
-- [EgonsoftHU.Text.Json](https://www.nuget.org/packages/EgonsoftHU.Text.Json)
+You can download the package from **nuget.org**: [EgonsoftHU.Text.Json](https://www.nuget.org/packages/EgonsoftHU.Text.Json)
 
-You can find the release notes [here](https://github.com/gcsizmadia/EgonsoftHU.Text.Json/releases).
+You can find the release notes [here](https://github.com/gcsizmadia/json/releases).
+
+[Releases](RELEASES.md) under active support or development:
+
+|Version|Release Date|Latest Patch Version|End of Support|Targets|
+|-|-|-|-|-|
+|10.0|2026-10-17|10.0.0|2028-11-14|`net8.0`, `net9.0`, `net10.0`<br/>`net472`<br/>`netstandard2.0`, `netstandard2.1`|
 
 ## Features
 
@@ -44,34 +56,32 @@ This library comes with the following features.
 
 ### EnumValueSerializer
 
-This library can make use of an implementation of this base class provided by the `EgonsoftHU.Extensions.Bcl` (`>= 3.0.0`) nuget package.
+This library makes use of an implementation of this base class.
 
-It has a static `Current` property that can be set to your custom implementation.
+**Please note:**  
+This base class has been moved from `EgonsoftHU.Extensions.Bcl` nuget package to this nuget package.
 
 #### Default implementation
 
-By default, the `Current` property is set to a default implementation that supports the following attribute:
+The default implementation supports the following attributes:
+- `System.Text.Json.Serialization.JsonStringEnumMemberNameAttribute`
 - `System.Runtime.Serialization.EnumMemberAttribute`
 
 Converting / retrieving an enum member value to / from a string uses these values in the following order, from highest to lowest priority:
 
-1. The value of the `EnumMemberAttribute.Value` property, if that attribute is applied to the current enum member.
+1. The value of the `JsonStringEnumMemberNameAttribute.Name` property, if that attribute is applied to the current enum member.
    - Both reading and writing are case sensitive.
-2. The name of the enum member.
-   - Reading is case insensitive.
-   - Writing is case sensitive.
+2. The value of the `EnumMemberAttribute.Value` property, if that attribute is applied to the current enum member.
+   - Both reading and writing are case sensitive.
+3. The name of the enum member.
+   - Both reading and writing are case sensitive.
 
 **Please note:**  
-The base class makes use of the `EgonsoftHU.Extensions.Bcl.Enumerations.EnumInfo<TEnum>` type.
-
-When accessing a specific `EnumInfo<TEnum>` type then its `SerializedValue` instance property
-will be initialized by the current serializer set in the `EnumValueSerializer.Current` property;
-therefore, it is highly recommended to set that property to the same implementation you will use
-for configuring JSON serializer options.
+This implementation makes use of the `EgonsoftHU.Extensions.Bcl.Enumerations.EnumInfo<TEnum>` type.
 
 ### JsonEnumValueSerializer
 
-This is an implementation of the above mentioned `EgonsoftHU.Extensions.Bcl.Enumerations.Serialization.EnumValueSerializer` type and
+This is an implementation of the above mentioned `EgonsoftHU.Text.Json.Serialization.Converters.EnumValueSerializer` type and
 it supports attributes and `System.Text.Json.JsonNamingPolicy` to convert/retrieve enum member values to/from a string.
 
 The following attributes are supported:
@@ -106,8 +116,7 @@ Converting / retrieving an enum member value to / from a string uses these value
 2. The value produced by the specified `JsonNamingPolicy`.
    - Both reading and writing are case sensitive.
 3. The name of the enum member.
-   - Reading is case insensitive.
-   - Writing is case sensitive.
+   - Both reading and writing are case sensitive.
 
 ### Custom implementation of EnumValueSerializer
 
@@ -117,15 +126,15 @@ You can create and use your own `EnumValueSerializer` implementation if the abov
 Additionally, you can use the `EnumInfo<TEnum>.Attributes` instance property to access all the
 attributes that are applied to an enum member.
 
-### JsonStringEnumConverter
+### EgonsoftJsonStringEnumConverterFactory
 
 This is an implementation of the `System.Text.Json.Serialization.JsonConverterFactory` that you can add to the
 `System.Text.Json.JsonSerializerOptions.Converters` collection.
 
 You can specify
 - a `JsonNamingPolicy`
-- a factory delegate to create an instance of an implementation of the `EnumValueSerializer` type using
-  an instance of `JsonSerializerOptions` and an instance of `JsonNamingPolicy`.
+- if numbers are allowed during both serialization and deserialization
+- an instance of an `EnumValueSerializer` implementation
 
 ### JsonSerializerOptionsProvider
 
@@ -138,13 +147,6 @@ to hold instances of the `System.Text.Json.JsonSerializerOptions` type.
 The default instance is created this way:
 
 ```csharp
-// EgonsoftHU namespaces are displayed only for clarity.
-
-var defaultEnumValueSerializer =
-    new EgonsoftHU.Text.Json.Serialization.Converters.JsonEnumValueSerializer(JsonNamingPolicy.CamelCase);
-
-EgonsoftHU.Extensions.Bcl.Enumerations.Serialization.EnumValueSerializer.Current = defaultEnumValueSerializer;
-
 JsonSerializerOptions options =
     new(JsonSerializerDefaults.Web)
     {
@@ -152,15 +154,36 @@ JsonSerializerOptions options =
         WriteIndented = false
     };
 
-options.Converters.Add(
-    new EgonsoftHU.Text.Json.Serialization.JsonStringEnumConverter(
-        JsonNamingPolicy.CamelCase,
-        enumValueSerializerFactory: (jsonSerializerOptions, jsonNamingPolicy) => defaultEnumValueSerializer
-    )
-);
+options.AddEgonsoftJsonStringEnumConverter();
 ```
 
-### JsonSerializerOptions extension method
+### JsonSerializerOptions extension methods
+
+The following extensions methods are defined:
+- AddEgonsoftJsonStringEnumConverter()
+- CopyTo()
+
+#### AddEgonsoftJsonStringEnumConverter()
+
+You can easily add this converter to your `JsonSerializerOptions` instance.
+
+```csharp
+using System.Text.Json;
+using EgonsoftHU.Text.Json.Serialization;
+
+JsonSerializerOptions options = /* omitted for clarity */
+
+options.AddEgonsoftJsonStringEnumConverter();
+```
+
+By default, this will add a converter that:
+- checks if `JsonStringEnumMemberNameAttribute` attribute is applied to an enum member,
+- uses `JsonNamingPolicy.CamelCase` and
+- allows numbers.
+
+You can customize the settings by passing an instance of `EgonsoftHU.Text.Json.Serialization.Converters.EnumConverterOptions` as a parameter.
+
+#### CopyTo()
 
 Suppose you already have an existing instance of the `JsonSerializerOptions` class that you would like to use when configuring ASP.NET Core.
 
@@ -197,8 +220,7 @@ will use these values in the following order, from highest to lowest priority:
 2. The value produced by `JsonNamingPolicy.CamelCase`.
    - Both reading and writing are case sensitive.
 3. The name of the enum member.
-   - Reading is case insensitive.
-   - Writing is case sensitive.
+   - Both reading and writing are case sensitive.
 
 ```csharp
 using System.Text.Json;
@@ -208,117 +230,21 @@ using Microsoft.AspNetCore.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
 
-JsonSerializerOptions options =
+JsonSerializerOptionsProvider.Current =
     new(JsonSerializerDefaults.Web)
     {
         Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
         WriteIndented = false
-    };
-
-options.Converters.Add(
-    new JsonStringEnumConverter(
-        JsonNamingPolicy.CamelCase
-        // If omitting the delegate factory then
-        // the value of the EnumValueSerializer.Current property will be used.
-    )
-);
-
-EnumValueSerializer.Current = new JsonEnumValueSerializer(JsonNamingPolicy.CamelCase);
-JsonSerializerOptionsProvider.Current = options;
+    }
+    .AddEgonsoftJsonStringEnumConverter();
 
 builder
     .Services
     .AddControllers()
-    .AddJsonOptions(jsonOptions => options.CopyTo(jsonOptions.JsonSerializerOptions));
+    .AddJsonOptions(jsonOptions => JsonSerializerOptionsProvider.Current.CopyTo(jsonOptions.JsonSerializerOptions));
 ```
 
 ## JsonStringEnumMemberNameAttribute support
 
-### If you target .NET 9
-
-It already includes the newer (but not stable) `9.0.0` version of `System.Text.Json` nuget package
-that contains this attribute.
-
-So this package - since it targets `net9.0` as well - directly uses this attribute type.
-
-### If you target a framework other than .NET 9
-
-For target frameworks other than `net9.0` currently this package references the latest stable
-(`8.0.5`) version of the `System.Text.Json` nuget package that does not contain this attribute.
-
-It means that in this case the `JsonEnumValueSerializer` checks for this attribute by name and uses
-reflection to get the value of its `Name` property.
-
-This package will be updated to use the `9.0.0` version of the `System.Text.Json` nuget package
-as soon as a stable version of it is available.
-
-### Using this attribute
-
-Since the `JsonEnumValueSerializer` can check for this attribute by name you can start using
-(or migrate to) this attribute without the need to reference the newer (but not stable)
-`9.0.0` version of `System.Text.Json` nuget package.
-
-All you need to do is to create an attribute with the same name (`JsonStringEnumMemberNameAttribute`)
-within the same namespace (`System.Text.Json.Serialization`) in your project.
-
-You can find the source code for this attribute here:  
-[JsonStringEnumMemberNameAttribute](https://github.com/dotnet/runtime/blob/main/src/libraries/System.Text.Json/src/System/Text/Json/Serialization/JsonStringEnumMemberNameAttribute.cs)
-
-**Please note:**  
-For this workaround to work neither the copy of the attribute nor the enum types using that copy
-should be in an assembly that references the `9.0.0` version of the `System.Text.Json` nuget package.
-Otherwise, you will get either a
-[CS0436 compiler warning](https://learn.microsoft.com/en-us/dotnet/csharp/misc/cs0436) or a
-[CS0433 compiler error](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/cs0433).
-
-*Important:*
-`System.Text.Json` will not target `net6.0` starting with version `9.0.0` which means
-that the `net6.0` version of this package will keep using the `8.0.5` version of it,
-hence you can keep your copy of the attribute in this case.
-
-#### AppContext switch
-
-To be on the safe side you also need to set a switch at application startup so that
-the `JsonEnumValueSerializer` will check for this attribute always by name
-even if you upgrade to the `9.0.0` version of the `System.Text.Json` nuget package.
-
-Option #1 - Set the switch in the code at application startup
-
-```csharp
-using System;
-using EgonsoftHU.Text.Json.Constants;
-
-AppContext.SetSwitch(AppContextSwitches.AlwaysCheckForJsonStringEnumMemberAttributeByName, true);
-```
-
-Option #2 - Set the switch in the startup project's .csproj file (in case of an SDK-style project)
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <!-- Rest is omitted for clarity -->
-  <ItemGroup>
-    <RuntimeHostConfigurationOption
-      Include="Switch.EgonsoftHU.Text.Json.AlwaysCheckForJsonStringEnumMemberAttributeByName"
-      Value="true"
-    />
-  </ItemGroup>
-</Project>
-```
-
-Option #3 - Set the switch in the startup project's App.config file (in case of a classic .NET Framework project)
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <!-- Rest is omitted for clarity -->
-  <runtime>
-    <AppContextSwitchOverrides
-      value="Switch.EgonsoftHU.Text.Json.AlwaysCheckForJsonStringEnumMemberAttributeByName=true"
-    />
-  </runtime>
-</configuration>
-```
-
-**Please note:**  
-Before removing this switch after upgrading to the `9.0.0` version of the `System.Text.Json` nuget package,
-make sure you deleted your copy of the attribute and your enum types reference the original attribute.
+This nuget package references the `10.0.x` version of the `System.Text.Json` nuget package,
+so this attribute is available for all targets of this nuget package.
