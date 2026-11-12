@@ -233,7 +233,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder
     .Services
     .AddControllers()
-    .AddJsonOptions(jsonOptions => jsonOptions.JsonSerializerOptions.AddEgonsoftJsonStringEnumConverter());
+    .AddJsonOptions(
+        jsonOptions => jsonOptions.JsonSerializerOptions.AddEgonsoftJsonStringEnumConverter()
+    );
 ```
 
 ## JsonStringEnumMemberNameAttribute support
