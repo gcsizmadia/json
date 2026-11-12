@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net472;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net472;net10.0;net11.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup>
     <IsPackable>true</IsPackable>
@@ -64,7 +64,7 @@ EgonsoftHU.Text.Json.JsonSerializerOptionsProvider</Summary>
     <!--<MinClientVersion></MinClientVersion>-->
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="EgonsoftHU.Extensions.Bcl" Version="10.0.0" />
+    <PackageReference Include="EgonsoftHU.Extensions.Bcl" Version="11.0.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
@@ -75,7 +75,7 @@ EgonsoftHU.Text.Json.JsonSerializerOptionsProvider</Summary>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net10.0' ">
-    <PackageReference Include="System.Text.Json" Version="10.0.13" />
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net11.0' ">
+    <PackageReference Include="System.Text.Json" Version="11.0.0" />
   </ItemGroup>
 </Project>
