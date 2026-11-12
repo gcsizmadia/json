@@ -87,11 +87,12 @@ it supports attributes and `System.Text.Json.JsonNamingPolicy` to convert/retrie
 
 The following attributes are supported:
 
-- `System.Text.Json.Serialization.JsonStringEnumMemberNameAttribute` (available in `System.Text.Json` (`>= 9.0.0`))  
+- `System.Text.Json.Serialization.JsonStringEnumMemberNameAttribute` - available in `System.Text.Json` (`>= 9.0.0`)
 - `System.Runtime.Serialization.EnumMemberAttribute`
 - `System.ComponentModel.DescriptionAttribute`
 - `System.ComponentModel.DisplayNameAttribute`
-- `System.ComponentModel.DataAnnotations.DisplayAttribute` (`Description`, `Name` and `ShortName` properties are supported.)
+- `System.ComponentModel.DataAnnotations.DisplayAttribute`
+  - Supported properties: `Description`, `Name` and `ShortName`
 
 To create an instance select a naming policy and an attribute using the `EgonsoftHU.Text.Json.Serialization.EnumMemberNameSelectorOption` enum type:
 
