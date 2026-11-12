@@ -204,6 +204,10 @@ builder
     .AddJsonOptions(jsonOptions => options.CopyTo(jsonOptions.JsonSerializerOptions));
 ```
 
+**Please note:**  
+By default, this method will not copy `JsonSerializerOptions.TypeInfoResolver` property value.  
+If it should also be copied then set the method's `overrideTypeResolver` parameter to `true`.
+
 ### Naming policies
 
 Although these are not the most wanted naming policies, they are available in case you need them.

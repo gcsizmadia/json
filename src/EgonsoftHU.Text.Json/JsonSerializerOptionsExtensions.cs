@@ -19,6 +19,10 @@ namespace EgonsoftHU.Text.Json
         /// </summary>
         /// <param name="source">The <see cref="JsonSerializerOptions"/> instance the settings of which should be copied.</param>
         /// <param name="target">The <see cref="JsonSerializerOptions"/> instance the settings of which will be overridden.</param>
+        /// <param name="overrideTypeInfoResolver">
+        /// <see langword="true"/> if <see cref="JsonSerializerOptions.TypeInfoResolver"/> property of <paramref name="target"/> should be overridden;
+        /// otherwise, <see langword="false"/>.
+        /// </param>
         /// <remarks>
         /// Useful when configuring <c>Microsoft.AspNetCore.Mvc.JsonOptions</c> instance
         /// with an existing instance of <see cref="JsonSerializerOptions"/><br/>
@@ -32,7 +36,7 @@ namespace EgonsoftHU.Text.Json
         /// builder.AddControllers().AddJsonOptions(jsonOptions => options.CopyTo(jsonOptions.JsonSerializerOptions));
         /// </c>
         /// </remarks>
-        public static void CopyTo(this JsonSerializerOptions source, JsonSerializerOptions target)
+        public static void CopyTo(this JsonSerializerOptions source, JsonSerializerOptions target, bool overrideTypeInfoResolver = false)
         {
             source.ThrowIfNull();
             target.ThrowIfNull();
@@ -63,7 +67,12 @@ namespace EgonsoftHU.Text.Json
             target.ReferenceHandler = source.ReferenceHandler;
             target.RespectNullableAnnotations = source.RespectNullableAnnotations;
             target.RespectRequiredConstructorParameters = source.RespectRequiredConstructorParameters;
-            target.TypeInfoResolver = source.TypeInfoResolver;
+
+            if (overrideTypeInfoResolver)
+            {
+                target.TypeInfoResolver = source.TypeInfoResolver;
+            }
+
             target.UnknownTypeHandling = source.UnknownTypeHandling;
             target.UnmappedMemberHandling = source.UnmappedMemberHandling;
             target.WriteIndented = source.WriteIndented;
