@@ -230,21 +230,13 @@ using Microsoft.AspNetCore.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
 
-JsonSerializerOptionsProvider.Current =
-    new(JsonSerializerDefaults.Web)
-    {
-        Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
-        WriteIndented = false
-    }
-    .AddEgonsoftJsonStringEnumConverter();
-
 builder
     .Services
     .AddControllers()
-    .AddJsonOptions(jsonOptions => JsonSerializerOptionsProvider.Current.CopyTo(jsonOptions.JsonSerializerOptions));
+    .AddJsonOptions(jsonOptions => jsonOptions.JsonSerializerOptions.AddEgonsoftJsonStringEnumConverter());
 ```
 
 ## JsonStringEnumMemberNameAttribute support
 
-This nuget package references the `10.0.x` version of the `System.Text.Json` nuget package,
+This nuget package references the `11.0.x` version of the `System.Text.Json` nuget package,
 so this attribute is available for all targets of this nuget package.
